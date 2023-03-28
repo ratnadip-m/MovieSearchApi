@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -45,6 +46,7 @@ func main() {
 	db.AutoMigrate(&Movie{})
 
 	router.POST("/movies", addMovie)
+	router.POST("/updatemovies", UpdateMovie)
 	router.GET("/searchmovies", GetMovie)
 	router.GET("/searchmoviesbyidyeargenres", GetMovieByIDYearRatingGenres)
 
@@ -72,7 +74,7 @@ func addMovie(c *gin.Context) {
 	// }
 	db.Save(&movie)
 
-	c.JSON(200, "result")
+	c.JSON(200, "Movie Added")
 }
 
 func GetMovie(c *gin.Context) {
@@ -177,4 +179,25 @@ func GetMovieByIDYearRatingGenres(c *gin.Context) {
 			return
 		}
 	}
+}
+
+func UpdateMovie(c *gin.Context) {
+	var movie Movie
+	var moviedb Movie
+
+	if err := c.ShouldBindJSON(&moviedb); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := db.First(&movie, moviedb.ID).Error; err != nil {
+		fmt.Println(err)
+	}
+
+	if err := db.Model(&movie).Updates(Movie{Rating: moviedb.Rating, Genres: moviedb.Genres}).Error; err != nil {
+		fmt.Println(err)
+	}
+	// db.Save(&movie)
+
+	c.JSON(200, "Movie Updated")
 }
